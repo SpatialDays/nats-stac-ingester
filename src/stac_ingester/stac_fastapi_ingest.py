@@ -1,0 +1,65 @@
+import json.decoder
+from urllib.parse import urljoin
+
+import requests
+
+
+def ingest_catalog(app_host: str, catalog_url: str):
+    catalog = get_json_from_url(url=catalog_url)
+
+    if catalog.get('type') != 'Catalog':
+        raise SystemExit(f"{catalog_url} is not a STAC Catalog.")
+
+    for link in catalog.get('links'):
+        if link.get('rel') == 'child':
+            ingest_collection(app_host=app_host, collection_url=link.get('href'))
+
+
+def ingest_collection(app_host: str, collection_url: str):
+    collection = get_json_from_url(url=collection_url)
+
+    post_or_put(urljoin(app_host, "/collections"), collection)
+
+    if [ln for ln in collection.get('links') if (ln.get('rel') == 'parent') and ('catalog' not in ln.get('href'))]:
+        raise SystemExit(f"{collection_url} is not a STAC Collection.")
+
+    for link in collection.get('links'):
+        if link.get('rel') == 'item':
+            ingest_item(app_host=app_host, collection_id=collection['id'], item_url=link.get('href'))
+
+
+def ingest_item(app_host: str, item_url: str):
+    item = get_json_from_url(url=item_url)
+
+    if item.get('type') != 'Feature':
+        raise SystemExit(f"{item_url} is not a STAC Item.")
+
+    post_or_put(urljoin(app_host, f"collections/{item.get('collection')}/items"), item)
+
+
+def get_json_from_url(url: str):
+    try:
+        r = requests.get(url)
+        r.raise_for_status()
+
+        return r.json()
+    except requests.exceptions.RequestException as e:
+        raise SystemExit(e)
+    except json.decoder.JSONDecodeError as json_e:
+        raise SystemExit(f"Error when parsing {url} JSON ({json_e})")
+
+
+def post_or_put(url: str, data: dict):
+    """Post or put data to url."""
+    try:
+        r = requests.post(url, json=data)
+        if r.status_code == 409:
+            # Exists, so update
+            r = requests.put(url, json=data)
+            # Unchanged may throw a 404
+            if not r.status_code == 404:
+                r.raise_for_status()
+        else:
+            r.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise SystemExit(f"Error while data ingesting: {e}")
