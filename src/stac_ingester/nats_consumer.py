@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import signal
-from urllib.parse import urljoin
 
 from nats.aio.client import Client as NATS
 from config import LOG_LEVEL, LOG_FORMAT, get_nats_url, get_api_url, get_s3_url
@@ -41,8 +40,12 @@ async def run(loop):
         if message_type in r.keys():
             for k, func in r.items():
                 if k in subject:
-                    url = urljoin(get_s3_url(), data)
-                    func(get_api_url(), url)
+                    url = f"{get_s3_url()}/{data}"
+                    try:
+                        func(get_api_url(), url)
+                        logger.info("DONE")
+                    except Exception as e:
+                        logger.warning(e)
 
     await nc.subscribe("stac_indexer.*", cb=message_handler)
 

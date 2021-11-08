@@ -2,13 +2,21 @@ import json.decoder
 from urllib.parse import urljoin
 
 import requests
+import logging
+
+from config import LOG_LEVEL, LOG_FORMAT
+
+logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+logger = logging.getLogger(__name__)
 
 
 def ingest_catalog(app_host: str, catalog_url: str):
     catalog = get_json_from_url(url=catalog_url)
 
     if catalog.get('type') != 'Catalog':
-        raise SystemExit(f"{catalog_url} is not a STAC Catalog.")
+        raise RuntimeError(f"{catalog_url} is not a STAC Catalog.")
+
+    logger.info("Ingesting catalog...")
 
     for link in catalog.get('links'):
         if link.get('rel') == 'child':
@@ -18,21 +26,25 @@ def ingest_catalog(app_host: str, catalog_url: str):
 def ingest_collection(app_host: str, collection_url: str):
     collection = get_json_from_url(url=collection_url)
 
-    post_or_put(urljoin(app_host, "/collections"), collection)
-
     if [ln for ln in collection.get('links') if (ln.get('rel') == 'parent') and ('catalog' not in ln.get('href'))]:
-        raise SystemExit(f"{collection_url} is not a STAC Collection.")
+        raise RuntimeError(f"{collection_url} is not a STAC Collection.")
+
+    logger.info(f"Ingesting {collection.get('id')} collection...")
+
+    post_or_put(urljoin(app_host, "/collections"), collection)
 
     for link in collection.get('links'):
         if link.get('rel') == 'item':
-            ingest_item(app_host=app_host, collection_id=collection['id'], item_url=link.get('href'))
+            ingest_item(app_host=app_host, item_url=link.get('href'))
 
 
 def ingest_item(app_host: str, item_url: str):
     item = get_json_from_url(url=item_url)
 
     if item.get('type') != 'Feature':
-        raise SystemExit(f"{item_url} is not a STAC Item.")
+        raise RuntimeError(f"{item_url} is not a STAC Item.")
+
+    logger.info(f"Ingesting {item.get('id')} item...")
 
     post_or_put(urljoin(app_host, f"collections/{item.get('collection')}/items"), item)
 
@@ -44,9 +56,9 @@ def get_json_from_url(url: str):
 
         return r.json()
     except requests.exceptions.RequestException as e:
-        raise SystemExit(e)
+        raise RuntimeError(e)
     except json.decoder.JSONDecodeError as json_e:
-        raise SystemExit(f"Error when parsing {url} JSON ({json_e})")
+        raise RuntimeError(f"Error when parsing {url} JSON ({json_e})")
 
 
 def post_or_put(url: str, data: dict):
@@ -62,4 +74,4 @@ def post_or_put(url: str, data: dict):
         else:
             r.raise_for_status()
     except requests.exceptions.RequestException as e:
-        raise SystemExit(f"Error while data ingesting: {e}")
+        raise RuntimeError(f"Error while data ingesting: {e}")
