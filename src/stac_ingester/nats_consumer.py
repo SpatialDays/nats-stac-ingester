@@ -47,7 +47,7 @@ async def run(loop):
                     except Exception as e:
                         logger.warning(e)
 
-    await nc.subscribe("stac_indexer.*", cb=message_handler)
+    await nc.subscribe("stac_ingester.*", cb=message_handler)
 
     def signal_handler():
         if nc.is_closed:

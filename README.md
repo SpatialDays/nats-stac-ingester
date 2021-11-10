@@ -20,19 +20,19 @@ deployed using docker-compose:
 ### Ingesting a Catalog
 
 ```bash
-nats pub -s nats://localhost:4222 stac_indexer.catalog stac_catalogs/novasar_test/catalog.json
+nats pub -s nats://localhost:4222 stac_ingester.catalog stac_catalogs/novasar_test/catalog.json
 ```
 
 ### Ingesting a Collection
 
 ```bash
-nats pub -s nats://localhost:4222 stac_indexer.collection stac_catalogs/novasar_test/novasar_scansar_20m/collection.json
+nats pub -s nats://localhost:4222 stac_ingester.collection stac_catalogs/novasar_test/novasar_scansar_20m/collection.json
 ```
 
 ### Ingesting an Item
 
 ```bash
-nats pub -s nats://localhost:4222 stac_indexer.item stac_catalogs/novasar_test/novasar_scansar_20m/NovaSAR_01_16359_slc_11_201025_231831_HH_2_ML_TC_TF_cog/NovaSAR_01_16359_slc_11_201025_231831_HH_2_ML_TC_TF_cog.json
+nats pub -s nats://localhost:4222 stac_ingester.item stac_catalogs/novasar_test/novasar_scansar_20m/NovaSAR_01_16359_slc_11_201025_231831_HH_2_ML_TC_TF_cog/NovaSAR_01_16359_slc_11_201025_231831_HH_2_ML_TC_TF_cog.json
 ```
 
 **NOTE**: This example is using the *https://s3-uk-1.sa-catapult.co.uk* endpoint and *public-eo-data* bucket given by 
