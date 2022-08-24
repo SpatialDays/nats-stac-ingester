@@ -1,14 +1,17 @@
 import asyncio
 import logging
+from logging import INFO
 import signal
+LOG_FORMAT = '%(asctime)s - %(levelname)6s - %(message)s'
+LOG_LEVEL = INFO
 
 from nats.aio.client import Client as NATS
-from configuration import LOG_LEVEL, LOG_FORMAT, get_nats_url
 from stac_fastapi_ingest import ingest_catalog, ingest_collection, ingest_item
 
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
 logger = logging.getLogger(__name__)
 
+NATS_SERVER_URL = "nats://localhost:4222"
 
 async def run(loop):
     nc = NATS()
@@ -19,7 +22,7 @@ async def run(loop):
         loop.stop()
 
     options = {
-        "servers": [get_nats_url()],
+        "servers": [NATS_SERVER_URL],
         "loop": loop,
         "closed_cb": closed_cb
     }
@@ -30,19 +33,19 @@ async def run(loop):
     async def message_handler_ingest_catalog(msg):
         subject = msg.subject
         data = msg.data.decode()
-        logger.info(f"Received a message on '{subject}': {data}")
+        logger.info(f"Received a message on '{subject}'")
         ingest_catalog(data)
 
     async def message_handler_ingest_collection(msg):
         subject = msg.subject
         data = msg.data.decode()
-        logger.info(f"Received a message on '{subject}': {data}")
+        logger.info(f"Received a message on '{subject}'")
         ingest_collection(data)
     
     async def message_handler_ingest_item(msg):
         subject = msg.subject
         data = msg.data.decode()
-        logger.info(f"Received a message on '{subject}': {data}")
+        logger.info(f"Received a message on '{subject}'")
         ingest_item(data)
     
 

@@ -1,13 +1,18 @@
 import json.decoder
 from urllib.parse import urljoin
-
+import os
 import requests
 import logging
+from logging import INFO
+LOG_FORMAT = '%(asctime)s - %(levelname)6s - %(message)s'
+LOG_LEVEL = INFO
 
-from configuration import LOG_LEVEL, LOG_FORMAT
 
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
 logger = logging.getLogger(__name__)
+
+STAC_SERVER_URL = os.environ.get(
+    "NATS_STAC_INGESTER_STAC_SERVER_URL", "http://localhost:8082/")
 
 
 def ingest_catalog(data):
@@ -24,23 +29,25 @@ def ingest_catalog(data):
     #         ingest_collection(app_host=app_host, collection_url=link.get('href'))
 
 
-def ingest_collection(data):
-    print(data)
-    # collection = get_json_from_url(url=collection_url)
+def ingest_collection(data_as_string):
+    data = json.loads(data_as_string)
+    # print(data)
+    links = data["links"]
 
-    # if [ln for ln in collection.get('links') if (ln.get('rel') == 'parent') and ('catalog' not in ln.get('href'))]:
-    #     raise RuntimeError(f"{collection_url} is not a STAC Collection.")
+    RELS_THAT_NEED_REMOVING = ["items", "parent", "root", "self", "collection"]
 
-    # logger.info(f"Ingesting {collection.get('id')} collection...")
+    # filter out the rels that we don't want to ingest
+    links = [link for link in links if link["rel"]
+             not in RELS_THAT_NEED_REMOVING]
+    # put the links back into the data
+    data["links"] = links
+    # print data in json format indented
+    # print(json.dumps(data, indent=4))
+    post_or_put(urljoin(STAC_SERVER_URL, "collections"), data)
 
-    # post_or_put(urljoin(app_host, "/collections"), collection)
 
-    # for link in collection.get('links'):
-    #     if link.get('rel') == 'item':
-    #         ingest_item(app_host=app_host, item_url=link.get('href'))
-
-
-def ingest_item(data):
+def ingest_item(data_as_string):
+    data = json.loads(data_as_string)
     print(data)
     # item = get_json_from_url(url=item_url)
 
