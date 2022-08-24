@@ -4,61 +4,52 @@ from urllib.parse import urljoin
 import requests
 import logging
 
-from config import LOG_LEVEL, LOG_FORMAT
+from configuration import LOG_LEVEL, LOG_FORMAT
 
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
 logger = logging.getLogger(__name__)
 
 
-def ingest_catalog(app_host: str, catalog_url: str):
-    catalog = get_json_from_url(url=catalog_url)
+def ingest_catalog(data):
+    print(data)
+    # catalog = get_json_from_url(url=catalog_url)
 
-    if catalog.get('type') != 'Catalog':
-        raise RuntimeError(f"{catalog_url} is not a STAC Catalog.")
+    # if catalog.get('type') != 'Catalog':
+    #     raise RuntimeError(f"{catalog_url} is not a STAC Catalog.")
 
-    logger.info("Ingesting catalog...")
+    # logger.info("Ingesting catalog...")
 
-    for link in catalog.get('links'):
-        if link.get('rel') == 'child':
-            ingest_collection(app_host=app_host, collection_url=link.get('href'))
-
-
-def ingest_collection(app_host: str, collection_url: str):
-    collection = get_json_from_url(url=collection_url)
-
-    if [ln for ln in collection.get('links') if (ln.get('rel') == 'parent') and ('catalog' not in ln.get('href'))]:
-        raise RuntimeError(f"{collection_url} is not a STAC Collection.")
-
-    logger.info(f"Ingesting {collection.get('id')} collection...")
-
-    post_or_put(urljoin(app_host, "/collections"), collection)
-
-    for link in collection.get('links'):
-        if link.get('rel') == 'item':
-            ingest_item(app_host=app_host, item_url=link.get('href'))
+    # for link in catalog.get('links'):
+    #     if link.get('rel') == 'child':
+    #         ingest_collection(app_host=app_host, collection_url=link.get('href'))
 
 
-def ingest_item(app_host: str, item_url: str):
-    item = get_json_from_url(url=item_url)
+def ingest_collection(data):
+    print(data)
+    # collection = get_json_from_url(url=collection_url)
 
-    if item.get('type') != 'Feature':
-        raise RuntimeError(f"{item_url} is not a STAC Item.")
+    # if [ln for ln in collection.get('links') if (ln.get('rel') == 'parent') and ('catalog' not in ln.get('href'))]:
+    #     raise RuntimeError(f"{collection_url} is not a STAC Collection.")
 
-    logger.info(f"Ingesting {item.get('id')} item...")
+    # logger.info(f"Ingesting {collection.get('id')} collection...")
 
-    post_or_put(urljoin(app_host, f"collections/{item.get('collection')}/items"), item)
+    # post_or_put(urljoin(app_host, "/collections"), collection)
+
+    # for link in collection.get('links'):
+    #     if link.get('rel') == 'item':
+    #         ingest_item(app_host=app_host, item_url=link.get('href'))
 
 
-def get_json_from_url(url: str):
-    try:
-        r = requests.get(url)
-        r.raise_for_status()
+def ingest_item(data):
+    print(data)
+    # item = get_json_from_url(url=item_url)
 
-        return r.json()
-    except requests.exceptions.RequestException as e:
-        raise RuntimeError(e)
-    except json.decoder.JSONDecodeError as json_e:
-        raise RuntimeError(f"Error when parsing {url} JSON ({json_e})")
+    # if item.get('type') != 'Feature':
+    #     raise RuntimeError(f"{item_url} is not a STAC Item.")
+
+    # logger.info(f"Ingesting {item.get('id')} item...")
+
+    # post_or_put(urljoin(app_host, f"collections/{item.get('collection')}/items"), item)
 
 
 def post_or_put(url: str, data: dict):

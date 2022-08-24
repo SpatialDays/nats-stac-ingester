@@ -13,11 +13,5 @@ def get_nats_url():
 
 def get_api_url():
     host = os.environ.get("API_HOST", 'localhost')
-    port = os.environ.get("API_PORT", 8082)
+    port = os.environ.get("API_PORT", 8081)
     return f"http://{host}:{port}"
-
-
-def get_s3_url():
-    endpoint = os.environ.get("S3_ENDPOINT", 'https://s3-uk-1.sa-catapult.co.uk')
-    bucket = os.environ.get("S3_BUCKET", 'public-eo-data')
-    return urljoin(endpoint, bucket)

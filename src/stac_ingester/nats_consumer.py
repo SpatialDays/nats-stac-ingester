@@ -3,7 +3,7 @@ import logging
 import signal
 
 from nats.aio.client import Client as NATS
-from config import LOG_LEVEL, LOG_FORMAT, get_nats_url, get_api_url, get_s3_url
+from configuration import LOG_LEVEL, LOG_FORMAT, get_nats_url
 from stac_fastapi_ingest import ingest_catalog, ingest_collection, ingest_item
 
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
@@ -26,28 +26,32 @@ async def run(loop):
 
     await nc.connect(**options)
     logger.info(f"Connected to NATS at {nc.connected_url.netloc}...")
-
-    async def message_handler(msg):
+    
+    async def message_handler_ingest_catalog(msg):
         subject = msg.subject
         data = msg.data.decode()
         logger.info(f"Received a message on '{subject}': {data}")
-        r = {
-            'catalog': ingest_catalog,
-            'collection': ingest_collection,
-            'item': ingest_item
-        }
-        message_type = subject.split('.')[1]
-        if message_type in r.keys():
-            for k, func in r.items():
-                if k in subject:
-                    url = f"{get_s3_url()}/{data}"
-                    try:
-                        func(get_api_url(), url)
-                        logger.info("DONE")
-                    except Exception as e:
-                        logger.warning(e)
+        ingest_catalog(data)
 
-    await nc.subscribe("stac_ingester.*", cb=message_handler)
+    async def message_handler_ingest_collection(msg):
+        subject = msg.subject
+        data = msg.data.decode()
+        logger.info(f"Received a message on '{subject}': {data}")
+        ingest_collection(data)
+    
+    async def message_handler_ingest_item(msg):
+        subject = msg.subject
+        data = msg.data.decode()
+        logger.info(f"Received a message on '{subject}': {data}")
+        ingest_item(data)
+    
+
+
+    # await nc.subscribe("nats_stac_ingester.*", cb=message_handler)
+    await nc.subscribe("nats_stac_ingester.catalog", cb=message_handler_ingest_catalog)
+    await nc.subscribe("nats_stac_ingester.collection", cb=message_handler_ingest_collection)
+    await nc.subscribe("nats_stac_ingester.item", cb=message_handler_ingest_item)
+
 
     def signal_handler():
         if nc.is_closed:
