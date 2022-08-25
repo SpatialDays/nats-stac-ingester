@@ -9,6 +9,14 @@ The metadata types supported are:
 - Collections
 - Items
 
+## Environment variables
+| Environment Variable | Used for | Default |
+|---|---|---|
+| NATS_STAC_INGESTER_NATS_SERVER_URL | Used for setting the NATS server we are listening to| http://localhost:4222 |
+| NATS_STAC_INGESTER_STAC_SERVER_URL | Used for setting the address of STAC server we are ingesting STAC records into | http://localhost:8082 |
+| NATS_STAC_INGESTER_STAC_SERVER_PROVIDER_NAME | Used for adding our STAC server as a provider (for the provider part) in the list of providers on STAC records we are storing. If ommited, our STAC server wont be added as a provider | ""|
+| NATS_STAC_INGESTER_STAC_SERVER_PROVIDER_URL | Used for adding our STAC server as a provider (for the URL part) in the list of providers on STAC records we are storing. If ommited, our STAC server wont be added as a provider |""|
+
 ## How can be used?
 
 Using [nats-cli](https://github.com/nats-io/natscli) from localhost.
@@ -16,7 +24,7 @@ Using [nats-cli](https://github.com/nats-io/natscli) from localhost.
 ### Ingesting a Catalog
 
 ```bash
-cat examples/mpc-catalog.json | nats pub nats_stac_ingester.catalo
+cat examples/mpc-catalog.json | nats pub nats_stac_ingester.catalog
 ```
 
 ### Ingesting a Collection
