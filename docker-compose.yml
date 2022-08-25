@@ -3,4 +3,7 @@ version: '3'
 services:
   nats-stac-ingester:
     build: .
-    
+    restart: unless-stopped
+    environment:
+      - NATS_STAC_INGESTER_NATS_SERVER_URL=nats://172.17.0.1:4222
+      - NATS_STAC_INGESTER_STAC_SERVER_URL=http://172.17.0.1:8082
