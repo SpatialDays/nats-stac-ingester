@@ -17,8 +17,18 @@ STAC_SERVER_PROVIDER_NAME = os.environ.get("NATS_STAC_INGESTER_STAC_SERVER_PROVI
 STAC_SERVER_PROVIDER_URL = os.environ.get("NATS_STAC_INGESTER_STAC_SERVER_PROVIDER_URL", "")
 
 
-def ingest_catalog(data):
-    pass
+def ingest_catalog(data_as_string: str) -> None:
+    """
+    Ingest catalog into the STAC server.
+
+    For each collection in the catalog, call ingest_collection.
+
+    :param data_as_string: Catalog represented as a JSON string.
+    :return: None
+    """
+    data = json.loads(data_as_string)
+    for i in data["collections"]:
+        ingest_collection(json.dumps(i))
 
 
 def ingest_collection(data_as_string: str) -> None:
